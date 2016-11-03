@@ -46,7 +46,7 @@ class Protocol {
 		class Request {
 
 			public:
-			
+	
 				/**
 				 * Creates a new request object from the given request json string
 				 */

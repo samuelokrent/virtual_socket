@@ -35,7 +35,6 @@ void sigchld_handler(int s) {
 	errno = saved_errno;
 }
 
-// get sockaddr, IPv4 or IPv6:
 void * Server::get_in_addr(struct sockaddr *sa) {
 	if (sa->sa_family == AF_INET) {
 		return &(((struct sockaddr_in*)sa)->sin_addr);
@@ -45,7 +44,6 @@ void * Server::get_in_addr(struct sockaddr *sa) {
 }
 
 // Taken from http://stackoverflow.com/questions/2371910/how-to-get-the-ip-address-and-port-number-from-addrinfo-in-unix-c
-// get port, IPv4 or IPv6:
 in_port_t Server::get_in_port(struct sockaddr *sa) {
 	if (sa->sa_family == AF_INET) {
 		return (((struct sockaddr_in*)sa)->sin_port);
@@ -168,6 +166,7 @@ void Server::acceptConnections(int sockfd) {
 }
 
 int Server::handleRequest(int requestFd, string host, in_port_t port) {
+
 
 	char buf[1025];
 	string res;

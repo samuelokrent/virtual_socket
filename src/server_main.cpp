@@ -7,7 +7,7 @@ int main(int argc, char * argv[]) {
 	std::string port;
 
 	if(argc == 1) {
-		port = "3333";
+		port = "6070";
 	} else if (argc == 2) {
 		port = string(argv[1]);
 	} else {
