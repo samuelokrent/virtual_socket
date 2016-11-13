@@ -12,7 +12,7 @@ int main(int argc, char * argv[]) {
 	Protocol protocol;
 
 	if(argc == 4 && !strcmp(argv[1], "register")) {
-		req = protocol.makeRegisterRequest(string(argv[2]), atoi(argv[3]));
+		req = protocol.makeRegisterRequest(string(argv[2]));
 	} else if (argc == 3 && !strcmp(argv[1], "connect")) {
 		req = protocol.makeConnectRequest(string(argv[2]));
 	} else {
@@ -21,11 +21,14 @@ int main(int argc, char * argv[]) {
 	}
 
 	Client client;
+	if(client.loadConfigFile(".config") < 0) {
+		exit(1);
+	}
 
 	Protocol::Response res = client.sendRequest(req);
 
 	if(res.isOK()) {
-		printf("%s:%s\n", res.getHost().c_str(), res.getPort().c_str());
+		printf("OK\n");
 	} else {
 		printf("Error: %s\n", res.getErrorMessage().c_str());
 	}

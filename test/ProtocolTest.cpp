@@ -33,8 +33,8 @@ class ProtocolTest : public TestFixture {
 
         void testRegisterRequest() {
             CPPUNIT_ASSERT(
-                p.makeRegisterRequest("hello", 1234) ==
-				"{\"id\":\"hello\",\"port\":1234,\"type\":\"register\"}\n"
+                p.makeRegisterRequest("hello") ==
+				"{\"id\":\"hello\",\"type\":\"register\"}\n"
             );
         }
 
@@ -42,13 +42,13 @@ class ProtocolTest : public TestFixture {
 
 			// A successful respone
             CPPUNIT_ASSERT(
-                p.makeResponse(true, "", "hostname", 1234) ==
-				"{\"host\":\"hostname\",\"port\":\"1234\",\"status\":\"ok\"}\n"
+                p.makeResponse(true, "", "hostname", "") ==
+				"{\"status\":\"ok\"}\n"
             );
 
 			// An error response
 			CPPUNIT_ASSERT(
-                p.makeResponse(false, "some error", "", -1) ==
+                p.makeResponse(false, "some error", "", "") ==
 				"{\"error_message\":\"some error\",\"status\":\"error\"}\n"
             );
         }

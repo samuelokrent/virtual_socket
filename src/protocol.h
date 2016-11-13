@@ -19,26 +19,55 @@ class Protocol {
 		// Protocol field values	
 		static const string REGISTER; 
 		static const string CONNECT;
+		static const string DATA;
 		static const string OK;
 		static const string ERROR;
 
 		/**
-		 * @return A request string for registering a server
-		 * @param id The id to associate with this server
-		 * @param port The port on which the server listens
+		 * @return A request string for registering a user-server
+		 * @param server_id The id to associate with this server
 		 */	
-		string makeRegisterRequest(string id, int port);
+		string makeRegisterRequest(string server_id);
 
-        /**
-         * @return A request string for connecting to a server
-         * @param id The id of server
-         */
-		string makeConnectRequest(string id);
+		/**
+		 * @return A request string intended to be sent
+		 * 	from user-client to proxy server, to make a connection
+		 * @param server_id The id of server
+		 */
+		string makeConnectRequest(string server_id);
 
-        /**
+		/**
+		 * @return A request string intended to be sent
+		 *	from proxy server to user-server, to make a connection
+		 * @param client_id The id of the client who sent the request
+		 */
+		string makeProxyConnectRequest(string client_id);
+
+		/**
+		 * @return A request string intended to be sent
+		 *  from user-client to proxy server, to send data
+		 * @param server_id The id of the recipient user-server
+		 * @param data The request intended for the end user-server
+		 */
+		string makeDataRequest(string server_id, string data);
+
+		/**
+		 * @return A request string intended to be sent
+		 *  from proxy server to user-server, to send data
+		 * @param client_id The id of the client who sent the request
+		 * @param data The original user request
+		 */
+		string makeProxyDataRequest(string client_id, string data);
+
+		/**
 		 * @return A response string containing the given values
-         */
-		string makeResponse(bool success, string errMsg, string host, int port);
+		 * @param success Whether the request was processed successfully
+		 * @param errMsg An error message, if an error occured
+		 * @param client_id The id of the client this reponse is intended for
+		 * @param data The body of the response
+		 */
+		string makeResponse(bool success, string errMsg, string client_id, string data);
+
 
 		/**
 		 * Request: A class modeling a request using this protocol
@@ -46,6 +75,8 @@ class Protocol {
 		class Request {
 
 			public:
+
+				Request() {}
 	
 				/**
 				 * Creates a new request object from the given request json string
@@ -63,14 +94,26 @@ class Protocol {
 				bool isRegisterRequest();
 
 				/**
-				 * @return the port number provided in this request
-				 */
-				string getPort();
+                 * @return Whether this request is sending data
+                 */
+                bool isDataRequest();
 
 				/**
 				 * @return The server ID provided in this request
 				 */
-				string getID();
+				string getServerID();
+
+				/**
+                 * @return The Client ID provided in this request
+                 */
+                string getClientID();
+
+				/**
+                 * @return The data in the body of this request
+                 */
+                string getData();
+
+				string toString();
 
 			private:
 
@@ -79,16 +122,18 @@ class Protocol {
 
 		};
 
-        /**
-         * Response: A class modeling a response using this protocol
-         */
+		/**
+		 * Response: A class modeling a response using this protocol
+		 */
 		class Response {
 
 			public:
+
+				Response() {}
 	
 				/**
-                 * Creates a new response object from the given response json string
-                 */	
+				 * Creates a new response object from the given response json string
+				 */	
 				Response(string resJson);
 
 				/**
@@ -107,14 +152,16 @@ class Protocol {
 				string getErrorMessage();
 	
 				/**
-				 * @return The hostname returned in this response
+				 * @return The id of the client for whom this response was intended
 				 */
-				string getHost();
+				string getClientID();
 			
 				/**
-				 * @return The port number returned in this response
+				 * @return The data in the body of this response
 				 */
-				string getPort();
+				string getData();
+
+				string toString();
 			
 			private:
 

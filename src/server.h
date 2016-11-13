@@ -1,50 +1,32 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include <string>
 #include "protocol.h"
+#include "simple_server.h"
 #include <map>
-#include <utility>
+#include <string>
 
 using std::map;
 using std::string;
-using std::pair;
 
 /**
  * Server: The server side of a networking tool
  * that creates virtual sockets between machines
  */
-class Server {
+class Server : public SimpleServer {
 
-	public:
-
-		/**
-		 * Starts the server listening on the given port
-		 */
-		void run(string port);
-	
 	private:
 
-		// A mapping between unique ID's and registered server hostname/ports
-		map<string, pair<string, in_port_t>> serverMap;
+		// A mapping between unique ID's and registered server file descriptors
+		map<string, int> serverMap;
 
 		// The protocol defining this server's communications
 		Protocol protocol;
 
 		/**
-		 * @return The hostname of the given address
+		 * Associates the given file descriptor with the given id
 		 */
-		void *get_in_addr(struct sockaddr *sa);
-
-		/**
-		 * @return The port number of the given address
-		 */
-		in_port_t get_in_port(struct sockaddr *sa);
-
-		/**
-		 * Associates the given host/port with the given id
-		 */
-		int registerServer(string id, string host, in_port_t port);
+		int registerServer(string id, int server_fd);
 
 		/**
 		 * Processes and responds to a request, and closes the socket
@@ -53,14 +35,15 @@ class Server {
 		 * @param host The hostname of the client making the request
 		 * @param port The source port number of the request
 		 */
-		int handleRequest(int requestFd, string host, in_port_t port);
+		virtual int handleRequest(int requestFd);
 
 		/**
-		 * Enters the main connection acceptance loop
-		 * @param sockfd The file descriptor of the socket
-		 *    on which the server is listening
+		 * Creates and facilitates a virtual connection between
+		 * user-client and user-server
+		 * @param clientFd The file descriptor of the client connection
+		 * @param serverFd the file descriptor of the server connection
 		 */
-		void acceptConnections(int sockfd);
+		void createVirtualConnection(int clientFd, int serverFd);
 
 };
 

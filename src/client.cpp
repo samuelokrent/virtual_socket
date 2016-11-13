@@ -10,14 +10,16 @@
 #include <arpa/inet.h>
 #include "protocol.h"
 #include "client.h"
+#include "network_util.h"
 #include <string>
 #include <iostream>
+#include <fstream>
 
 using std::string;
 using std::cout;
+using std::endl;
+using std::ifstream;
 
-#define PORT "6070"
-#define HOSTNAME "localhost"
 #define MAXDATASIZE 1024
 
 // Simple client code taken from here:
@@ -45,9 +47,14 @@ Protocol::Response Client::sendRequest(string req) {
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((rv = getaddrinfo(HOSTNAME, PORT, &hints, &servinfo)) != 0) {
+	if ((rv = getaddrinfo(proxyHost.c_str(), proxyPort.c_str(), 
+			&hints, &servinfo)) != 0) {
+
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-		return Protocol::Response(protocol.makeResponse(false, "Could not resolve host", "", -1));
+
+		return Protocol::Response(
+			protocol.makeResponse(false, "Could not resolve host", "", NULL)
+		);
 	}
 
 	// loop through all the results and connect to the first we can
@@ -68,7 +75,9 @@ Protocol::Response Client::sendRequest(string req) {
 
 	if (p == NULL) {
 		fprintf(stderr, "client: failed to connect\n");
-		return Protocol::Response(protocol.makeResponse(false, "Could not connect", "", -1));
+		return Protocol::Response(
+			protocol.makeResponse(false, "Could not connect", "", NULL)
+		);
 	}
 
 	inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
@@ -76,16 +85,45 @@ Protocol::Response Client::sendRequest(string req) {
 
 	freeaddrinfo(servinfo); // all done with this structure
 
-	send(sockfd, req.c_str(), req.length(), 0);
-
-	if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
-		perror("recv");
-		exit(1);
-	}
-
-	buf[numbytes] = '\0';
+	Protocol::Response res = NetworkUtil::sendRequest(sockfd, req);
 
 	close(sockfd);
 
-	return Protocol::Response(buf);	
+	return res;
+}
+
+int Client::loadConfigFile(string filename) {
+	
+	string line;
+	ifstream config(filename);
+	
+	if(config.is_open()) {
+		
+		int splitIdx;
+		string field;
+
+		while(getline(config, line)) {
+			if((line.substr(0, 1) == "#") || (splitIdx = line.find(":")) < 0)
+				continue;
+
+			if((field = line.substr(0, splitIdx)) == "Host") {
+				this->proxyHost = line.substr(splitIdx + 2);
+			} else if (field == "Port") {
+				this->proxyPort = line.substr(splitIdx + 2);
+			}
+		}
+
+		config.close();
+
+	} else {
+		cout << "Error: could not open config file: " << filename << endl;
+		return -1;
+	}
+
+	if(proxyHost == "") {
+		cout << "Error: hostname not provided";
+		return -1;
+	}
+
+	return 0;
 }

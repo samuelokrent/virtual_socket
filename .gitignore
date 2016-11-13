@@ -1,5 +1,8 @@
 src/*.o
-rm *.o
-rm server
+*.o
+server
+client
+tester
 .svn
 .*.swp
+TODO

@@ -13,42 +13,66 @@ using nlohmann::json;
 
 const string Protocol::REGISTER = "register";
 const string Protocol::CONNECT = "connect";
+const string Protocol::DATA = "data";
 const string Protocol::OK = "ok";
 const string Protocol::ERROR = "error";
 
 const string TYPE = "type";
 const string HOST = "host";
 const string STATUS = "status";
-const string PORT = "port";
-const string ID = "id";
+const string SERVER_ID = "server_id";
+const string CLIENT_ID = "client_id";
 const string ERROR_MESSAGE = "error_message";
+const string DATA = "data"; 
 
-
-string Protocol::makeRegisterRequest(string id, int port) {
+string Protocol::makeRegisterRequest(string id) {
 	json req;
 	req[TYPE] = REGISTER;
-	req[PORT] = port;
-	req[ID] = id;
+	req[SERVER_ID] = id;
 	return req.dump() + "\n";
 }
 
 string Protocol::makeConnectRequest(string id) {
-    json req;
-    req[TYPE] = CONNECT;
-    req[ID] = id;
-    return req.dump() + "\n";
+	json req;
+	req[TYPE] = CONNECT;
+	req[SERVER_ID] = id;
+	return req.dump() + "\n";
 }
 
-string Protocol::makeResponse(bool success, string errMsg, string host, int port) {
-    json res;
-    res[STATUS] = (success ? OK : ERROR);
-	if(success) {
-		res[PORT] = std::to_string(port);
-    	res[HOST] = host;
-	} else {
+string Protocol::makeProxyConnectRequest(string id) {
+	json req;
+	req[TYPE] = CONNECT;
+	req[CLIENT_ID] = id;
+	return req.dump() + "\n";
+}
+
+string Protocol::makeDataRequest(string server_id, string data) {
+	json req;
+	req[TYPE] = DATA;
+	req[SERVER_ID] = server_id;
+	req[DATA] = string(data);
+	return req.dump();
+}
+
+string Protocol::makeProxyDataRequest(string client_id, string data) {
+	json req;
+	req[TYPE] = DATA;
+	req[CLIENT_ID] = client_id;
+	req[DATA] = string(data);
+	return req.dump();
+}
+
+string Protocol::makeResponse(bool success, string errMsg, 
+								string client_id, string data) {
+	json res;
+	res[STATUS] = (success ? OK : ERROR);
+	res[CLIENT_ID] = client_id;
+	if(success && (data != "")) {
+		res[DATA] = string(data);
+	} else if(!success) {
 		res[ERROR_MESSAGE] = errMsg;
 	}
-    return res.dump() + "\n";
+	return res.dump() + "\n";
 }
 
 /**
@@ -67,12 +91,24 @@ bool Protocol::Request::isRegisterRequest() {
 	return (j[TYPE] == REGISTER);
 }
 
-string Protocol::Request::getPort() {
-	return j[PORT];
+bool Protocol::Request::isDataRequest() {
+	return (j[TYPE] == DATA);
 }
 
-string Protocol::Request::getID() {
-    return j[ID];
+string Protocol::Request::getServerID() {
+	return j[SERVER_ID];
+}
+
+string Protocol::Request::getClientID() {
+	return j[CLIENT_ID];
+}
+
+string Protocol::Request::getData() {
+	return j[DATA];
+}
+
+string Protocol::Request::toString() {
+	return j.dump() + "\n";
 }
 
 /**
@@ -80,25 +116,29 @@ string Protocol::Request::getID() {
  */
 
 Protocol::Response::Response(string resJson) {
-    this->j = json::parse(resJson);
+	this->j = json::parse(resJson);
 }
 
 bool Protocol::Response::isOK() {
-    return (j[STATUS] == OK);
+	return (j[STATUS] == OK);
 }
 
 bool Protocol::Response::isError() {
-    return (j[STATUS] == ERROR);
+	return (j[STATUS] == ERROR);
 }
 
-string Protocol::Response::getHost() {
-	return j[HOST];
+string Protocol::Response::getClientID() {
+	return j[CLIENT_ID];
 }
 
-string Protocol::Response::getPort() {
-    return j[PORT];
+string Protocol::Response::getData() {
+	return j[DATA];
 }
 
 string Protocol::Response::getErrorMessage() {
-    return j[ERROR_MESSAGE];
+	return j[ERROR_MESSAGE];
+}
+
+string Protocol::Response::toString() {
+	return j.dump() + "\n";
 }
