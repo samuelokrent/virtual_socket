@@ -12,10 +12,22 @@ class NetworkUtil {
 	public:
 
 		/**
+		 * Opens a tcp connection to the given host and port
+		 * 
+		 * @return A socket file descriptor, or -1 on error
+		 */
+		static int createConnection(string hostname, string port);
+
+		/**
 		 * Send the given request to the given socket
 		 * @return A protocol response
 		 */	
 		static Protocol::Response sendRequest(int sockfd, string req);
+
+		/**
+		 * Reads and returns a request packet from the given socket
+		 */
+		static Protocol::Request * readRequest(int sockfd);
 
 		/**
 		 * Sends the given request string to the server

@@ -16,10 +16,13 @@ class Protocol {
 
 	public:
 
+		static const int PACKET_SIZE = 1024;
+
 		// Protocol field values	
 		static const string REGISTER; 
 		static const string CONNECT;
 		static const string DATA;
+		static const string END;
 		static const string OK;
 		static const string ERROR;
 
@@ -42,6 +45,13 @@ class Protocol {
 		 * @param client_id The id of the client who sent the request
 		 */
 		string makeProxyConnectRequest(string client_id);
+
+		/**
+		 * @return A request string intended to be sent
+		 * from user-server to proxy server, indicating that a
+		 * new connection channel has been created for the given client
+		 */
+		string makeConnectionCreatedRequest(string client_id);
 
 		/**
 		 * @return A request string intended to be sent
@@ -68,6 +78,11 @@ class Protocol {
 		 */
 		string makeResponse(bool success, string errMsg, string client_id, string data);
 
+		/**
+		 * @return A packet signaling the end of a connection
+		 */
+		string makeEndPacket();
+
 
 		/**
 		 * Request: A class modeling a request using this protocol
@@ -92,6 +107,12 @@ class Protocol {
 				 * @return Whether this request is to register a new server
 				 */
 				bool isRegisterRequest();
+
+				/**
+				 * @return Whether this request is to indicate a new connection
+				 * has been created
+				 */
+				bool isConnectionCreatedRequest();
 
 				/**
                  * @return Whether this request is sending data

@@ -20,15 +20,29 @@ class Client {
 		 */	
 		Protocol::Response sendRequest(string req);
 
-	private:
+		/**
+		 * Starts the client
+		 */
+		virtual void start() = 0;
+		
+	protected:
 
 		// Hostname of proxy server
 		string proxyHost = "";
 
 		// Port number of proxy server (default is 6070)
 		string proxyPort = "6070";
-		
+
+		// Port number of local server	
+		string serverPort;
+
+		// File descriptor of connection to proxy server
+		int connection = -1;
+
 		Protocol protocol;
+
+		// Opens a connection to the proxy server
+		int connect();
 
 };
 

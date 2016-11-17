@@ -17,6 +17,7 @@
 #include "network_util.h"
 
 using std::map;
+using std::set;
 using std::string;
 using std::to_string;
 using std::cout;
@@ -59,6 +60,9 @@ int Server::handleRequest(int requestFd) {
 	if(req.isRegisterRequest()) {
 
 		// REGISTER REQUEST
+		// A new user-server is broadcasting its services
+		// Record an association of the provided id and 
+		// this new file descriptor
 		if(registerServer(req.getServerID(), requestFd)) {
 
 			// Failure to register means ID is taken
@@ -75,24 +79,58 @@ int Server::handleRequest(int requestFd) {
 	} else if(req.isConnectRequest()) {
 
 		// CONNECT REQUEST
+		// A new user-client is requesting to connect
+		// to a registered server
+		// Record this client's file descriptor 
+		// and pass the request along to the registered server
 		if(serverMap.count(req.getServerID())) {
 
-			int serverFd = serverMap[req.getServerID()];
+			string clientID = to_string(requestFd);
 
-			if(!fork()) {
-				// In child, facilitate connection
-				createVirtualConnection(requestFd, serverFd);
-			}			
-			// Parent should not send a response
+			pendingConnections.insert(clientID);	
+
+			int serverFd = serverMap[req.getServerID()];
+			string proxyReq = protocol.makeProxyConnectRequest(clientID);
+			send(serverFd, proxyReq.c_str(), proxyReq.length(), 0);
 
 		} else {
 
 			// Attempt to connect to nonexistent server
 			res = protocol.makeResponse(false, "ID not registered", "", "");
 			send(requestFd, res.c_str(), res.length(), 0);
+			close(requestFd);
 		}
 		
-		close(requestFd);
+	} else if(req.isConnectionCreatedRequest()) {
+
+			// CONNECTION_CREATED REQUEST
+			// A user-server is responding to a user-client's
+			// connect request, via a new socket created for
+			// their communication
+			// Begin proxying their connection
+			if(pendingConnections.count(req.getClientID())) {
+
+				int serverFd = requestFd;
+				int clientFd = atoi(req.getClientID().c_str());
+
+				if(!fork()) {
+
+					// In child, inform client of successful connection
+					string proxyRes = protocol.makeResponse(true, "", "", "");
+					send(clientFd, proxyRes.c_str(), proxyRes.length(), 0);
+
+					// And facilitate connection
+					facilitateConnection(clientFd, serverFd);
+				}
+				// Parent should not send a response
+
+			} else {
+				// Attempt to connect to nonexistent server
+				res = protocol.makeResponse(false, "ID not registered", "", "");
+				send(requestFd, res.c_str(), res.length(), 0);
+			}
+
+			close(requestFd);
 
 	} else {
 	
@@ -103,13 +141,16 @@ int Server::handleRequest(int requestFd) {
 		close(requestFd);
 	}
 
+	// TODO Create CONNECTION_FAILED request to indicate failure of
+	// new connection to user-server
+
 
 	return 0;
 }
 
-void Server::createVirtualConnection(int clientFd, int serverFd) {
+void Server::facilitateConnection(int clientFd, int serverFd) {
 
-	Protocol::Response serverRes;
+	/*Protocol::Response serverRes;
 	Protocol::Request clientReq;
 	string  proxyReq, proxyRes;
 	char buf[MAXDATASIZE+1];
@@ -134,7 +175,7 @@ void Server::createVirtualConnection(int clientFd, int serverFd) {
 
 		serverRes = NetworkUtil::forwardResponse(clientFd, serverFd, proxyReq);
 
-	}
+	}*/
 	
 	close(clientFd);
 	close(serverFd);

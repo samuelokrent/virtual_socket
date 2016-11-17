@@ -4,9 +4,11 @@
 #include "protocol.h"
 #include "simple_server.h"
 #include <map>
+#include <set>
 #include <string>
 
 using std::map;
+using std::set;
 using std::string;
 
 /**
@@ -19,6 +21,9 @@ class Server : public SimpleServer {
 
 		// A mapping between unique ID's and registered server file descriptors
 		map<string, int> serverMap;
+
+		// A set of file descriptors of clients who are attempting connections
+		set<string> pendingConnections;
 
 		// The protocol defining this server's communications
 		Protocol protocol;
@@ -43,7 +48,7 @@ class Server : public SimpleServer {
 		 * @param clientFd The file descriptor of the client connection
 		 * @param serverFd the file descriptor of the server connection
 		 */
-		void createVirtualConnection(int clientFd, int serverFd);
+		void facilitateConnection(int clientFd, int serverFd);
 
 };
 

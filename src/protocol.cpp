@@ -62,6 +62,11 @@ string Protocol::makeProxyDataRequest(string client_id, string data) {
 	return req.dump();
 }
 
+string Protocol::makeConnectionCreatedRequest(string client_id) {
+	// TODO define protocol here
+	return "";
+}
+
 string Protocol::makeResponse(bool success, string errMsg, 
 								string client_id, string data) {
 	json res;
@@ -93,6 +98,11 @@ bool Protocol::Request::isRegisterRequest() {
 
 bool Protocol::Request::isDataRequest() {
 	return (j[TYPE] == DATA);
+}
+
+bool Protocol::Request::isConnectionCreatedRequest() {
+	// TODO define protocol here
+	return false;
 }
 
 string Protocol::Request::getServerID() {
