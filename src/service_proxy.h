@@ -33,11 +33,6 @@ class ServiceProxy : public Client {
 		string port;
 
 		/**
-		 * Facilitates communication between client and server
-		 */
-		void facilitateConnection(int clientFd, int serverFd);
-
-		/**
 		 * Attempts to create a new virtual connection
 		 * for the client who sent the request
 		 */

@@ -42,14 +42,6 @@ class Server : public SimpleServer {
 		 */
 		virtual int handleRequest(int requestFd);
 
-		/**
-		 * Creates and facilitates a virtual connection between
-		 * user-client and user-server
-		 * @param clientFd The file descriptor of the client connection
-		 * @param serverFd the file descriptor of the server connection
-		 */
-		void facilitateConnection(int clientFd, int serverFd);
-
 };
 
 #endif

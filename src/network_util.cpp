@@ -12,8 +12,8 @@
 #include "network_util.h"
 
 using std::string;
-
-#define MAXDATASIZE 1024
+using std::cout;
+using std::endl;
 
 // Simple client code taken from here:
 // http://beej.us/guide/bgnet/output/html/multipage/clientserver.html#simpleserver
@@ -30,7 +30,7 @@ void *get_in_addr(struct sockaddr *sa)
 
 int NetworkUtil::createConnection(string hostname, string port) {
 	int sockfd, numbytes;
-	char buf[MAXDATASIZE + 1];
+	char buf[Protocol::PACKET_SIZE + 1];
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
 
@@ -78,10 +78,10 @@ Protocol::Response NetworkUtil::sendRequest(int sockfd, string req) {
 
 	send(sockfd, req.c_str(), req.length(), 0);
 
-	if ((res_len = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
+	if ((res_len = recv(sockfd, buf, Protocol::PACKET_SIZE, 0)) == -1) {
 		perror("recv");
 		return Protocol::Response(protocol.makeResponse(
-			false, "Could not receive response", "", NULL
+			false, "Could not receive response"
 		));
 	}
 
@@ -96,7 +96,7 @@ Protocol::Request * NetworkUtil::readRequest(int sockfd) {
 	int res_len;
 	char buf[Protocol::PACKET_SIZE + 1];
 
-	if ((res_len = recv(sockfd, buf, Protocol::PACKET_SIZE, MSG_WAITALL)) == -1) {
+	if ((res_len = recv(sockfd, buf, Protocol::PACKET_SIZE, 0)) == -1) {
 		perror("recv");
 		return NULL;
 	}
@@ -114,3 +114,52 @@ Protocol::Response NetworkUtil::forwardResponse(int clientFd,
 	send(clientFd, proxyRes.c_str(), proxyRes.length(), 0);
 	return serverRes;
 }
+
+void * exchangeData(void * fds) {
+	
+	int srcFd = ((int *) fds)[0];
+	int dstFd = ((int *) fds)[1];
+
+	char buf[Protocol::PACKET_SIZE];
+	int num_bytes;	
+
+	while((num_bytes = recv(srcFd, buf, Protocol::PACKET_SIZE, 0)) > 0) {
+
+		write(1, buf, num_bytes);
+		
+		if(send(dstFd, buf, Protocol::PACKET_SIZE, 0) < 0) break; 
+	}
+	
+	close(srcFd);
+	close(dstFd);
+
+	return NULL;
+
+}
+
+void NetworkUtil::facilitateConnection(int clientFd, int serverFd) {
+
+	pthread_t threads[2];
+	int fds1[2];
+	int fds2[2];
+	void * rv;
+
+	fds1[0] = clientFd;
+	fds1[1] = serverFd;
+
+	fds2[0] = serverFd;
+	fds2[1] = clientFd;
+
+	cout << "Starting data exchange threads" << endl;
+
+	pthread_create(&threads[0], NULL, exchangeData, (void *) &fds1);
+	pthread_create(&threads[1], NULL, exchangeData, (void *) &fds2);
+
+	pthread_join(threads[0], &rv);
+	pthread_join(threads[1], &rv);
+
+	cout << "Done facilitating connection" << endl;
+
+}
+
+

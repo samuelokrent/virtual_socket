@@ -37,6 +37,12 @@ class NetworkUtil {
 		 * @return The response returned by the server
 		 */
 		static Protocol::Response forwardResponse(int clientFd, int serverFd, string proxyReq);
+
+		/**
+		 * Exchanges data between the given sockets
+		 */
+		static void facilitateConnection(int clientFd, int serverFd);
+
 };
 
 #endif

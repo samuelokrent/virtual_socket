@@ -13,68 +13,42 @@ using nlohmann::json;
 
 const string Protocol::REGISTER = "register";
 const string Protocol::CONNECT = "connect";
-const string Protocol::DATA = "data";
+const string Protocol::CONNECTION_CREATED = "connection_created";
 const string Protocol::OK = "ok";
 const string Protocol::ERROR = "error";
 
 const string TYPE = "type";
-const string HOST = "host";
 const string STATUS = "status";
-const string SERVER_ID = "server_id";
-const string CLIENT_ID = "client_id";
+const string NODE_ID = "node_id";
 const string ERROR_MESSAGE = "error_message";
-const string DATA = "data"; 
+
+string Protocol::makeRequest(string type, string node_id) {
+	json req;
+	req[TYPE] = type;
+	req[NODE_ID] = node_id;
+	return req.dump() + "\n";
+}
 
 string Protocol::makeRegisterRequest(string id) {
-	json req;
-	req[TYPE] = REGISTER;
-	req[SERVER_ID] = id;
-	return req.dump() + "\n";
+	return makeRequest(REGISTER, id);
 }
 
 string Protocol::makeConnectRequest(string id) {
-	json req;
-	req[TYPE] = CONNECT;
-	req[SERVER_ID] = id;
-	return req.dump() + "\n";
+	return makeRequest(CONNECT, id);
 }
 
 string Protocol::makeProxyConnectRequest(string id) {
-	json req;
-	req[TYPE] = CONNECT;
-	req[CLIENT_ID] = id;
-	return req.dump() + "\n";
-}
-
-string Protocol::makeDataRequest(string server_id, string data) {
-	json req;
-	req[TYPE] = DATA;
-	req[SERVER_ID] = server_id;
-	req[DATA] = string(data);
-	return req.dump();
-}
-
-string Protocol::makeProxyDataRequest(string client_id, string data) {
-	json req;
-	req[TYPE] = DATA;
-	req[CLIENT_ID] = client_id;
-	req[DATA] = string(data);
-	return req.dump();
+	return makeRequest(CONNECT, id);
 }
 
 string Protocol::makeConnectionCreatedRequest(string client_id) {
-	// TODO define protocol here
-	return "";
+	return makeRequest(CONNECTION_CREATED, client_id);
 }
 
-string Protocol::makeResponse(bool success, string errMsg, 
-								string client_id, string data) {
+string Protocol::makeResponse(bool success, string errMsg) {
 	json res;
 	res[STATUS] = (success ? OK : ERROR);
-	res[CLIENT_ID] = client_id;
-	if(success && (data != "")) {
-		res[DATA] = string(data);
-	} else if(!success) {
+	if(!success) {
 		res[ERROR_MESSAGE] = errMsg;
 	}
 	return res.dump() + "\n";
@@ -96,25 +70,16 @@ bool Protocol::Request::isRegisterRequest() {
 	return (j[TYPE] == REGISTER);
 }
 
-bool Protocol::Request::isDataRequest() {
-	return (j[TYPE] == DATA);
-}
-
 bool Protocol::Request::isConnectionCreatedRequest() {
-	// TODO define protocol here
-	return false;
+	return (j[TYPE] == CONNECTION_CREATED);
 }
 
 string Protocol::Request::getServerID() {
-	return j[SERVER_ID];
+	return j[NODE_ID];
 }
 
 string Protocol::Request::getClientID() {
-	return j[CLIENT_ID];
-}
-
-string Protocol::Request::getData() {
-	return j[DATA];
+	return j[NODE_ID];
 }
 
 string Protocol::Request::toString() {
@@ -135,14 +100,6 @@ bool Protocol::Response::isOK() {
 
 bool Protocol::Response::isError() {
 	return (j[STATUS] == ERROR);
-}
-
-string Protocol::Response::getClientID() {
-	return j[CLIENT_ID];
-}
-
-string Protocol::Response::getData() {
-	return j[DATA];
 }
 
 string Protocol::Response::getErrorMessage() {

@@ -50,8 +50,6 @@ in_port_t SimpleServer::get_in_port(struct sockaddr *sa) {
 
 void SimpleServer::run(string port) {
 
-	printf("run");
-
     this->sock_fd = startListening(port);
 
 	printf("Started Listening\n");
@@ -126,8 +124,6 @@ int SimpleServer::startListening(string port) {
 		perror("sigaction");
 		return -1;
 	}
-
-	printf("server: waiting for new connections...\n");
 
 	return sockfd;
 }

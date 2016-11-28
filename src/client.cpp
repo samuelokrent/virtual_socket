@@ -31,7 +31,7 @@ Protocol::Response Client::sendRequest(string req) {
 
 	if(connection < 0) {
 		return Protocol::Response(protocol.makeResponse(
-			false, "Could not connect", "", ""));
+			false, "Could not connect"));
 	}
 
 	return NetworkUtil::sendRequest(connection, req);

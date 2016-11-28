@@ -33,12 +33,6 @@ class ClientProxy : public Client, public SimpleServer {
 		 * SimpleServer override
 		 */
 		virtual int handleRequest(int requestFd);
-
-		/**
-		 * Facilitates connection between service-client on
-		 * the local machine, and proxy server
-		 */
-		void facilitateConnection(int clientFd, int serverFd);
 };
 
 

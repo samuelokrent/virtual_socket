@@ -23,7 +23,7 @@ int main(int argc, char * argv[]) {
 		client = new ClientProxy(argv[2]);
 
 	} else {
-		printf("usage: %s register|connect <server_id> [portnum]\n", argv[0]);
+		printf("usage: %s register|connect <server_id>\n", argv[0]);
 		return 1;
 	}
 
@@ -31,6 +31,8 @@ int main(int argc, char * argv[]) {
 		delete client;
 		exit(1);
 	}
+
+	printf("Starting client...\n");
 
 	client->start();
 

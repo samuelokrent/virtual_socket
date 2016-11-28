@@ -37,6 +37,8 @@ int Server::registerServer(string id, int server_fd) {
 
 int Server::handleRequest(int requestFd) {
 
+	cout << "Received new connection" << endl;
+
 	char buf[MAXDATASIZE+1];
 	string res;
 
@@ -66,13 +68,15 @@ int Server::handleRequest(int requestFd) {
 		if(registerServer(req.getServerID(), requestFd)) {
 
 			// Failure to register means ID is taken
-			res = protocol.makeResponse(false, "ID already registered", req.getServerID(), "");
+			res = protocol.makeResponse(false, "ID already registered");
 
 		} else {
 
 			// Registered!
-			res = protocol.makeResponse(true, "", req.getServerID(), "");
+			res = protocol.makeResponse(true, "");
 		}
+	
+		cout << "Sending register response: " << res << endl;
 
 		send(requestFd, res.c_str(), res.length(), 0);
 
@@ -91,12 +95,16 @@ int Server::handleRequest(int requestFd) {
 
 			int serverFd = serverMap[req.getServerID()];
 			string proxyReq = protocol.makeProxyConnectRequest(clientID);
+
+			cout << "Sending proxy connect request: " << proxyReq << endl;
 			send(serverFd, proxyReq.c_str(), proxyReq.length(), 0);
 
 		} else {
 
 			// Attempt to connect to nonexistent server
-			res = protocol.makeResponse(false, "ID not registered", "", "");
+			res = protocol.makeResponse(false, "ID not registered");
+
+			cout << "Sending error connect response: " << res << endl;
 			send(requestFd, res.c_str(), res.length(), 0);
 			close(requestFd);
 		}
@@ -116,17 +124,25 @@ int Server::handleRequest(int requestFd) {
 				if(!fork()) {
 
 					// In child, inform client of successful connection
-					string proxyRes = protocol.makeResponse(true, "", "", "");
+					string proxyRes = protocol.makeResponse(true, "");
+
+					cout << "Notifying client of successful connection" << endl;
 					send(clientFd, proxyRes.c_str(), proxyRes.length(), 0);
 
+					cout << "Facilitating connection" << endl;
+					
 					// And facilitate connection
-					facilitateConnection(clientFd, serverFd);
+					NetworkUtil::facilitateConnection(clientFd, serverFd);
+					
+					exit(0);
 				}
 				// Parent should not send a response
 
 			} else {
 				// Attempt to connect to nonexistent server
-				res = protocol.makeResponse(false, "ID not registered", "", "");
+				res = protocol.makeResponse(false, "ID not registered");
+
+				cout << "Sending connection_created error response: " << res << endl;
 				send(requestFd, res.c_str(), res.length(), 0);
 			}
 
@@ -135,8 +151,9 @@ int Server::handleRequest(int requestFd) {
 	} else {
 	
 		// UNEXPECTED REQUEST FORMAT
-		res = protocol.makeResponse(false, "REGISTER or CONNECT request expected", 
-										"", "");
+		res = protocol.makeResponse(false, "REGISTER or CONNECT request expected");
+
+		cout << "Sending unexpected response: " << res << endl; 
 		send(requestFd, res.c_str(), res.length(), 0);
 		close(requestFd);
 	}
@@ -146,38 +163,4 @@ int Server::handleRequest(int requestFd) {
 
 
 	return 0;
-}
-
-void Server::facilitateConnection(int clientFd, int serverFd) {
-
-	/*Protocol::Response serverRes;
-	Protocol::Request clientReq;
-	string  proxyReq, proxyRes;
-	char buf[MAXDATASIZE+1];
-	int bytes_read;
-
-	proxyReq = protocol.makeProxyConnectRequest(to_string(clientFd));
-
-	serverRes = NetworkUtil::forwardResponse(clientFd, serverFd, proxyReq);
-
-	while(serverRes.isOK()) {
-
-		bytes_read = recv(clientFd, buf, MAXDATASIZE, 0);
-		if(bytes_read == 0)
-			break;
-		buf[bytes_read] = '\0';
-		clientReq = Protocol::Request(buf); 
-
-		if(!clientReq.isDataRequest())
-			break;
-		proxyReq = protocol.makeProxyDataRequest(to_string(clientFd),
-								clientReq.getData());
-
-		serverRes = NetworkUtil::forwardResponse(clientFd, serverFd, proxyReq);
-
-	}*/
-	
-	close(clientFd);
-	close(serverFd);
-	exit(0);	
 }

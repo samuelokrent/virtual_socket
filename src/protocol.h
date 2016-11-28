@@ -21,10 +21,15 @@ class Protocol {
 		// Protocol field values	
 		static const string REGISTER; 
 		static const string CONNECT;
-		static const string DATA;
-		static const string END;
+		static const string CONNECTION_CREATED;
 		static const string OK;
 		static const string ERROR;
+
+		/**
+		 * @return a request string of the given type,
+		 * containing the given node id
+		 */
+		string makeRequest(string type, string node_id);
 
 		/**
 		 * @return A request string for registering a user-server
@@ -62,26 +67,12 @@ class Protocol {
 		string makeDataRequest(string server_id, string data);
 
 		/**
-		 * @return A request string intended to be sent
-		 *  from proxy server to user-server, to send data
-		 * @param client_id The id of the client who sent the request
-		 * @param data The original user request
-		 */
-		string makeProxyDataRequest(string client_id, string data);
-
-		/**
 		 * @return A response string containing the given values
 		 * @param success Whether the request was processed successfully
 		 * @param errMsg An error message, if an error occured
 		 * @param client_id The id of the client this reponse is intended for
-		 * @param data The body of the response
 		 */
-		string makeResponse(bool success, string errMsg, string client_id, string data);
-
-		/**
-		 * @return A packet signaling the end of a connection
-		 */
-		string makeEndPacket();
+		string makeResponse(bool success, string errMsg);
 
 
 		/**
