@@ -120,16 +120,24 @@ void * exchangeData(void * fds) {
 	int srcFd = ((int *) fds)[0];
 	int dstFd = ((int *) fds)[1];
 
-	char buf[Protocol::PACKET_SIZE];
+	char buf[Protocol::PACKET_SIZE + 1];
 	int num_bytes;	
 
 	while((num_bytes = recv(srcFd, buf, Protocol::PACKET_SIZE, 0)) > 0) {
 
-		write(1, buf, num_bytes);
-		
-		if(send(dstFd, buf, Protocol::PACKET_SIZE, 0) < 0) break; 
+		buf[num_bytes] = '\0';
+
+		// print data, for debugging purposes
+		printf("Read from %d: %s\n", srcFd, buf);	
+	
+		if(send(dstFd, buf, num_bytes, 0) < 0) {
+			printf("Error sending to %d\n", dstFd);
+			break;
+		} 
 	}
 	
+	printf("Num bytes read from %d: %d. Closing.\n", srcFd, num_bytes);
+
 	close(srcFd);
 	close(dstFd);
 

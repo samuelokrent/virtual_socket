@@ -1,7 +1,7 @@
 src/*.o
 *.o
-server
-client
+sp
+spd
 tester
 .svn
 .*.swp

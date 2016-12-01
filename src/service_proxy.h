@@ -24,6 +24,11 @@ class ServiceProxy : public Client {
 		virtual void start();
 
 
+		/**
+		 * Unregisters the service from the proxy server
+		 */
+		void shutdown();
+
 	private:
 
 		// The id under which this server is registered

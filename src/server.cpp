@@ -80,6 +80,29 @@ int Server::handleRequest(int requestFd) {
 
 		send(requestFd, res.c_str(), res.length(), 0);
 
+	} else if(req.isUnregisterRequest()) {
+
+		// UNREGISTER REQUEST
+		// A user-server is no longer broadcasting its services
+		// Remove from server map
+		
+		if(serverMap.count(req.getServerID())) {
+	
+			// Close connection to server
+			close(serverMap[req.getServerID()]);
+
+			// Erase ID association
+			serverMap.erase(req.getServerID());	
+		}
+
+		string res = protocol.makeResponse(true, "");
+
+		cout << "Sending unregister response: " << res << endl;
+
+		send(requestFd, res.c_str(), res.length(), 0);
+
+		close(requestFd);
+
 	} else if(req.isConnectRequest()) {
 
 		// CONNECT REQUEST
@@ -116,35 +139,19 @@ int Server::handleRequest(int requestFd) {
 			// connect request, via a new socket created for
 			// their communication
 			// Begin proxying their connection
-			if(pendingConnections.count(req.getClientID())) {
 
-				int serverFd = requestFd;
-				int clientFd = atoi(req.getClientID().c_str());
+			updateConnectionStatus(req.getClientID(), requestFd, true);
 
-				if(!fork()) {
+			close(requestFd);
 
-					// In child, inform client of successful connection
-					string proxyRes = protocol.makeResponse(true, "");
+	} else if(req.isConnectionFailedRequest()) {
 
-					cout << "Notifying client of successful connection" << endl;
-					send(clientFd, proxyRes.c_str(), proxyRes.length(), 0);
+			// CONNECTION_FAILED REQUEST
+			// A user-server is responding to a user-client's
+			// connect request, via a new socket
+			// Notify client of failure
 
-					cout << "Facilitating connection" << endl;
-					
-					// And facilitate connection
-					NetworkUtil::facilitateConnection(clientFd, serverFd);
-					
-					exit(0);
-				}
-				// Parent should not send a response
-
-			} else {
-				// Attempt to connect to nonexistent server
-				res = protocol.makeResponse(false, "ID not registered");
-
-				cout << "Sending connection_created error response: " << res << endl;
-				send(requestFd, res.c_str(), res.length(), 0);
-			}
+			updateConnectionStatus(req.getClientID(), requestFd, false);
 
 			close(requestFd);
 
@@ -163,4 +170,57 @@ int Server::handleRequest(int requestFd) {
 
 
 	return 0;
+}
+
+void Server::updateConnectionStatus(string clientID, int serverFd, bool success) {
+
+	if(pendingConnections.count(clientID)) {
+
+		int clientFd = atoi(clientID.c_str());
+
+		if(!fork()) {
+
+			// In child, inform client of connection status	
+			if(success) {	
+
+				string proxyRes = protocol.makeResponse(true, "");
+
+				cout << "Notifying client of successful connection" << endl;
+				send(clientFd, proxyRes.c_str(), proxyRes.length(), 0);
+
+				cout << "Facilitating connection" << endl;
+
+				// And facilitate connection
+				NetworkUtil::facilitateConnection(clientFd, serverFd);
+
+			} else {
+
+				string proxyRes = 
+					protocol.makeResponse(false, "Could not connect to service");
+
+				cout << "Notifying client of failed connection" << endl;
+				send(clientFd, proxyRes.c_str(), proxyRes.length(), 0);
+				
+				close(clientFd);
+				close(serverFd);
+			}
+	
+			exit(0);
+
+		} else {
+			
+			// Connection is no longer pending, so parent can stop
+			// keeping track of it
+			pendingConnections.erase(clientID);
+			close(clientFd);
+		}
+
+	} else {
+
+		// Attempt to connect to nonexistent client
+		string res = protocol.makeResponse(false, "ID not registered");
+
+		cout << "Sending error response: " << res << endl;
+		send(serverFd, res.c_str(), res.length(), 0);
+	}
 }

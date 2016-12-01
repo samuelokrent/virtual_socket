@@ -2,12 +2,21 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <csignal>
 #include "service_proxy.h"
 #include "network_util.h"
 
 using std::string;
 using std::cout;
 using std::endl;
+
+ServiceProxy * serviceProxy = NULL;
+
+void interrupt_handler(int signum) {
+	if(serviceProxy) {
+		serviceProxy->shutdown();
+	}
+}
 
 ServiceProxy::ServiceProxy(string id, string port) {
 	this->id = id;
@@ -36,6 +45,10 @@ void ServiceProxy::start() {
 
 	cout << "Registered. Entering connection loop." << endl;
 
+	// Unregister service on shutdown
+	serviceProxy = this;
+	signal(SIGINT, interrupt_handler);
+
 	while(1) {
 		// read connect request, facil
 		Protocol::Request * connectReq = NetworkUtil::readRequest(connection);
@@ -55,28 +68,37 @@ void ServiceProxy::handleConnectRequest(Protocol::Request * connectReq) {
 
 	string clientID = connectReq->getClientID();
 
-	cout << "Connecting to service..." << endl;
-	// Create new connection to this machine's service
-	int serviceConnection = NetworkUtil::createConnection("localhost", port);
+	cout << "Making new connection to proxy server..." << endl;
+	// Create new connection to proxy server
+	int newProxyConnection =
+			NetworkUtil::createConnection(proxyHost, proxyPort);
 
-	if(serviceConnection < 0) {
+	if(newProxyConnection < 0) {
 
-		// TODO notify proxy server of failure
-		cout << "Error: Could not connect to service on port " << port << endl;
+		cout << "Error: " <<
+			"Could not create new connection to proxy server" << endl;
 
 	} else {
 
-		cout << "Making new connection to proxy server..." << endl;
-		// Create new connection to proxy server
-		int newProxyConnection =
-				NetworkUtil::createConnection(proxyHost, proxyPort);
+		// Spawn new process to manage connections
+		if(!fork()) {
 
-		if(newProxyConnection < 0) {
-			cout << "Error: " <<
-				"Could not create new connection to proxy server" << endl;
-		} else {
+			cout << "Connecting to service..." << endl;
+			// Create new connection to this machine's service
+			int serviceConnection = NetworkUtil::createConnection("localhost", port);
 
-			if(!fork()) {
+			if(serviceConnection < 0) {
+
+				cout << "Error: Could not connect to service on port " << port << endl;
+				// Inform proxy server of failure to connect
+				string conFailed =
+					protocol.makeConnectionFailedRequest(clientID);
+				send(newProxyConnection,
+					conFailed.c_str(), conFailed.length(), 0);
+				
+				close(newProxyConnection);
+
+			} else {
 
 				cout << "Connected successfully. Notifying proxy server" << endl;
 				// Inform proxy server of successful connection
@@ -89,17 +111,39 @@ void ServiceProxy::handleConnectRequest(Protocol::Request * connectReq) {
 				// And begin facilitating connection
 				NetworkUtil::facilitateConnection(newProxyConnection, serviceConnection);
 
-				exit(0);
-
-			} else {
-				close(newProxyConnection);
 			}
+			
+			exit(0);
 
+		} else {
+
+			// Parent process, close socket
+			close(newProxyConnection);
 		}
-
-		close(serviceConnection);
 	}
 
 	delete connectReq;
 }
 
+void ServiceProxy::shutdown() {
+
+	cout << "Shutting down..." << endl;
+
+	int newProxyConnection =
+            NetworkUtil::createConnection(proxyHost, proxyPort);
+
+	if(newProxyConnection > 0) {
+
+		// Notify proxy server that this service is no longer available
+		string unregister =
+				protocol.makeUnregisterRequest(id);
+		send(newProxyConnection,
+			unregister.c_str(), unregister.length(), 0);
+
+		close(newProxyConnection);
+	}
+
+	if(connection > 0) close(connection);
+
+	exit(0);
+}

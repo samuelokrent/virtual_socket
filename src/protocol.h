@@ -20,8 +20,10 @@ class Protocol {
 
 		// Protocol field values	
 		static const string REGISTER; 
+		static const string UNREGISTER;
 		static const string CONNECT;
 		static const string CONNECTION_CREATED;
+		static const string CONNECTION_FAILED;
 		static const string OK;
 		static const string ERROR;
 
@@ -36,6 +38,12 @@ class Protocol {
 		 * @param server_id The id to associate with this server
 		 */	
 		string makeRegisterRequest(string server_id);
+
+		/**
+		 * @return A request string for unregistering a user-server
+		 * @param server_id The id associated with this server
+		 */
+		string makeUnregisterRequest(string server_id);
 
 		/**
 		 * @return A request string intended to be sent
@@ -57,6 +65,13 @@ class Protocol {
 		 * new connection channel has been created for the given client
 		 */
 		string makeConnectionCreatedRequest(string client_id);
+
+		/**
+		 * @return A request string intended to be sent
+		 * from user-server to proxy server, indicating that a
+		 * a new connection was not created
+		 */
+		string makeConnectionFailedRequest(string client_id);
 
 		/**
 		 * @return A request string intended to be sent
@@ -99,6 +114,11 @@ class Protocol {
 				 */
 				bool isRegisterRequest();
 
+                /**
+                 * @return Whether this request is to unregister a user-server
+                 */
+                bool isUnregisterRequest();
+
 				/**
 				 * @return Whether this request is to indicate a new connection
 				 * has been created
@@ -106,9 +126,15 @@ class Protocol {
 				bool isConnectionCreatedRequest();
 
 				/**
-                 * @return Whether this request is sending data
-                 */
-                bool isDataRequest();
+				 * @return Whether this request is to indicate a new connection
+				 * has failed
+				 */
+				bool isConnectionFailedRequest();
+
+				/**
+				 * @return Whether this request is sending data
+				 */
+				bool isDataRequest();
 
 				/**
 				 * @return The server ID provided in this request
@@ -116,14 +142,14 @@ class Protocol {
 				string getServerID();
 
 				/**
-                 * @return The Client ID provided in this request
-                 */
-                string getClientID();
+				 * @return The Client ID provided in this request
+				 */
+				string getClientID();
 
 				/**
-                 * @return The data in the body of this request
-                 */
-                string getData();
+				 * @return The data in the body of this request
+				 */
+				string getData();
 
 				string toString();
 

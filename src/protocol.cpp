@@ -12,8 +12,10 @@ using nlohmann::json;
  */
 
 const string Protocol::REGISTER = "register";
+const string Protocol::UNREGISTER = "unregister";
 const string Protocol::CONNECT = "connect";
 const string Protocol::CONNECTION_CREATED = "connection_created";
+const string Protocol::CONNECTION_FAILED = "connection_failed";
 const string Protocol::OK = "ok";
 const string Protocol::ERROR = "error";
 
@@ -33,6 +35,10 @@ string Protocol::makeRegisterRequest(string id) {
 	return makeRequest(REGISTER, id);
 }
 
+string Protocol::makeUnregisterRequest(string id) {
+    return makeRequest(UNREGISTER, id);
+}
+
 string Protocol::makeConnectRequest(string id) {
 	return makeRequest(CONNECT, id);
 }
@@ -43,6 +49,10 @@ string Protocol::makeProxyConnectRequest(string id) {
 
 string Protocol::makeConnectionCreatedRequest(string client_id) {
 	return makeRequest(CONNECTION_CREATED, client_id);
+}
+
+string Protocol::makeConnectionFailedRequest(string client_id) {
+    return makeRequest(CONNECTION_FAILED, client_id);
 }
 
 string Protocol::makeResponse(bool success, string errMsg) {
@@ -70,8 +80,16 @@ bool Protocol::Request::isRegisterRequest() {
 	return (j[TYPE] == REGISTER);
 }
 
+bool Protocol::Request::isUnregisterRequest() {
+    return (j[TYPE] == UNREGISTER);
+}
+
 bool Protocol::Request::isConnectionCreatedRequest() {
 	return (j[TYPE] == CONNECTION_CREATED);
+}
+
+bool Protocol::Request::isConnectionFailedRequest() {
+    return (j[TYPE] == CONNECTION_FAILED);
 }
 
 string Protocol::Request::getServerID() {

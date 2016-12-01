@@ -42,6 +42,12 @@ class Server : public SimpleServer {
 		 */
 		virtual int handleRequest(int requestFd);
 
+		/**
+		 * Updates the status of a pending connection from user-client
+		 * to user-server, and notifies user-client
+		 */
+		void updateConnectionStatus(string clientID, int serverFd, bool success);
+
 };
 
 #endif
