@@ -51,9 +51,9 @@ int Client::loadConfigFile(string filename) {
 			if((line.substr(0, 1) == "#") || (splitIdx = line.find(":")) < 0)
 				continue;
 
-			if((field = line.substr(0, splitIdx)) == "Host") {
+			if((field = line.substr(0, splitIdx)) == "ProxyHost") {
 				this->proxyHost = line.substr(splitIdx + 2);
-			} else if (field == "Port") {
+			} else if (field == "ProxyPort") {
 				this->proxyPort = line.substr(splitIdx + 2);
 			}
 		}

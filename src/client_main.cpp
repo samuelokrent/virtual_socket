@@ -8,7 +8,7 @@
 using std::string;
 using std::cout;
 
-const string CONFIG_FILE = ".config";
+const string CONFIG_FILE = ".spconfig";
 
 int main(int argc, char * argv[]) {
 
