@@ -8,14 +8,14 @@ tester:
 
 sp: protocol.o client.o service_proxy.o client_proxy.o simple_server.o
 	g++ -std=c++11 -c src/client_main.cpp
-	g++ -std=c++11 protocol.o network_util.o client.o service_proxy.o client_proxy.o client_main.o simple_server.o -o sp
+	g++ -std=c++11 -pthread protocol.o network_util.o client.o service_proxy.o client_proxy.o client_main.o simple_server.o -o sp
 
 spd: protocol.o server.o
 	g++ -std=c++11 -c src/server_main.cpp
-	g++ -std=c++11 protocol.o network_util.o server.o simple_server.o server_main.o -o spd
+	g++ -std=c++11 -pthread protocol.o network_util.o server.o simple_server.o server_main.o -o spd
 
 network_util.o:
-	g++ -std=c++11 -c src/network_util.cpp
+	g++ -std=c++11 -pthread -c src/network_util.cpp
 
 protocol.o:
 	g++ -std=c++11 -c src/protocol.cpp

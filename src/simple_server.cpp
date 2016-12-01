@@ -40,7 +40,7 @@ void * SimpleServer::get_in_addr(struct sockaddr *sa) {
 }
 
 // Taken from http://stackoverflow.com/questions/2371910/how-to-get-the-ip-address-and-port-number-from-addrinfo-in-unix-c
-in_port_t SimpleServer::get_in_port(struct sockaddr *sa) {
+unsigned short SimpleServer::get_in_port(struct sockaddr *sa) {
 	if (sa->sa_family == AF_INET) {
 		return (((struct sockaddr_in*)sa)->sin_port);
 	}
@@ -136,7 +136,7 @@ void SimpleServer::acceptConnections(int sockfd) {
 	struct sockaddr_storage client_addr; // connector's address information
 	int client_fd;
 	char client_host[INET6_ADDRSTRLEN];
-	in_port_t client_port;
+	unsigned short client_port;
 
 	// Continuously accept connections from clients
 	while(1) {

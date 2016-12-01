@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <string>
+#include <pthread.h>
 #include "protocol.h"
 #include "network_util.h"
 

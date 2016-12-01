@@ -52,7 +52,7 @@ class SimpleServer {
 		/**
 		 * @return The port number of the given address
 		 */
-		in_port_t get_in_port(struct sockaddr *sa);
+		unsigned short get_in_port(struct sockaddr *sa);
 
 };
 
